@@ -4,7 +4,7 @@ A Medium-clone REST API (Kotlin + Spring Boot) used as a target application for 
 
 ## The App (System Under Test)
 
-A pre-existing [RealWorld](https://github.com/gothinkster/realworld) demo API. We didn't write it, we test it.
+A pre-existing [RealWorld](https://github.com/gothinkster/realworld) demo API. We didn't write it, we test it. Forked from [gothinkster/kotlin-spring-realworld-example-app](https://github.com/gothinkster/kotlin-spring-realworld-example-app).
 
 - REST API on `localhost:8080`
 - H2 in-memory database
