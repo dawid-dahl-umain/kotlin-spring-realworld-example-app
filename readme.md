@@ -1,60 +1,121 @@
-# ![RealWorld Example App using Kotlin and Spring](kotlin-spring.png)
+# RealWorld API + Cucumber BDD
 
-> ### Kotlin + Spring codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld-example-apps) spec and API.
+A Medium-clone REST API (Kotlin + Spring Boot) used as a target application for Cucumber BDD acceptance testing. Part of the Hexathon 2026 project exploring AI-powered BDD test generation.
 
-This codebase was created to demonstrate a fully fledged fullstack application built with Kotlin + Spring including CRUD operations, authentication, routing, pagination, and more.
+## The App (System Under Test)
 
-We've gone to great lengths to adhere to the Kotlin + Spring community styleguides & best practices.
+A pre-existing [RealWorld](https://github.com/gothinkster/realworld) demo API. We didn't write it, we test it.
 
-For more information on how to this works with other frontends/backends, head over to the [RealWorld](https://github.com/gothinkster/realworld) repo.
+- REST API on `localhost:8080`
+- H2 in-memory database
+- JWT authentication
+- Endpoints: users, profiles, articles, tags, comments
 
-# How it works
+## Prerequisites
 
-The application uses Spring (Web, Data, AOP, Cache) and the Kotlin language.
+- Java 21 (Kotlin 1.8.21 doesn't support newer versions)
+- [just](https://github.com/casey/just) command runner (`brew install just`)
 
-    + client/
-        Some feign clients for testing
-    + exception/
-        Exceptions by the application
-    + jwt/
-        AOP advice that check for authentication using a defined @ApiKeySecured operation
-    + model/
-        + inout/
-            Object for REST in/out operations
-        JPA models
-    + repository/
-        + specification/
-            Some specifications for JPA
-        Spring repositories
-    + service/
-        Spring services
-    + web/
-        Spring controllers
-    - ApiApplication.kt <- The main class
+## Commands
 
-# Security
+```bash
+just                  # List all commands
+just run              # Start the app on localhost:8080
+just test             # Run all tests (unit + acceptance)
+just test-unit        # Run only unit tests
+just test-acceptance  # Run only acceptance tests
+```
 
-Instead of using Spring Security to implement an authenticator using JWT, I created a simple AOP advice that checks
-the `Authorization` header and put the user to be found in a `ThreadLocal` (see `UserService`).
+The justfile sets `JAVA_HOME` to Java 21 automatically.
 
-The secret key and jwt issuer are stored in `application.properties`.
+## Manual Testing
 
-# Database
+Start the app with `just run`, then hit the API with curl, Postman, or any HTTP client:
 
-It uses a H2 in memory database (for now), can be changed easily in the `application.properties` for any other database.
-You'll need to add the correct maven dependency for the needed `Driver` in `pom.xml`.
+```bash
+# Get all tags
+curl http://localhost:8080/api/tags
 
-# Getting started
+# Register a user
+curl -X POST http://localhost:8080/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"user": {"username": "jake", "email": "jake@example.com", "password": "password"}}'
 
-You need Java and maven installed.
+# Login
+curl -X POST http://localhost:8080/api/users/login \
+  -H "Content-Type: application/json" \
+  -d '{"user": {"email": "jake@example.com", "password": "password"}}'
+```
 
-    mvn spring-boot:run
-    open http://localhost:8080
+The full API spec is at [RealWorld API Spec](https://realworld-docs.netlify.app/specifications/backend/endpoints/).
 
-# Help
+## Two Types of Tests
 
-Please fork and PR to improve the code.
+### Unit Tests (`just test-unit`)
 
-# Kotlin
+Standard JUnit 5 tests under `src/test/kotlin/io/realworld/`. They test internal logic directly. Run by Maven **Surefire** during the `test` phase.
 
-I've been using Kotlin for some time, but I'm no expert, so feel free to contribute and modify the code to make it more idiomatic!
+### Acceptance Tests (`just test-acceptance`)
+
+Cucumber BDD tests that treat the app as a black box: boot it up, hit it over HTTP, verify the responses. Run by Maven **Failsafe** during the `verify` phase.
+
+## Unit Test Architecture
+
+Standard JUnit 5 tests that live alongside the app code. They can import services, repositories, and models directly; no HTTP involved. Spring Boot loads the application context, and tests call internal methods and assert results.
+
+```
+src/test/kotlin/io/realworld/
+└── ApiApplicationTests.kt    <- JUnit 5, @SpringBootTest
+```
+
+## Acceptance Test Architecture
+
+Three layers, each with a clear responsibility:
+
+```
+src/test/
+├── resources/acceptance/
+│   └── specifications/           <- Layer 1: Gherkin
+│       └── tags.feature
+└── kotlin/acceptance/
+    ├── CucumberIT.kt             <- test runner (Failsafe picks up *IT classes)
+    ├── SpringIntegrationConfig.kt
+    ├── dsl/                      <- Layer 2: step definitions
+    │   └── TagSteps.kt
+    └── driver/
+        ├── ProtocolDriver.kt     <- interface (DSL depends on this)
+        └── http/                 <- Layer 3: HTTP implementation
+            └── HttpProtocolDriver.kt
+```
+
+### Layer 1: Specifications
+
+Business-readable Gherkin scenarios. No code, no technical details.
+
+```gherkin
+Feature: Tags
+  Scenario: Retrieve tags from a fresh system
+    When a client requests the list of tags
+    Then the response is a list of tags
+```
+
+### Layer 2: DSL (Step Definitions)
+
+Routes Gherkin steps to driver methods. Pure routing with no assertions, no HTTP, and no SUT knowledge. Only depends on the `ProtocolDriver` interface.
+
+### Layer 3: Driver
+
+The only layer that talks to the app. Makes HTTP calls, owns its own DTOs, does all assertions. If a driver method completes without throwing, the step passes. If it throws, the step fails.
+
+The driver sits behind a `ProtocolDriver` interface. The current implementation is HTTP (`HttpProtocolDriver`), but the same specs and DSL could run against a CLI or web UI driver without changes.
+
+### Decoupling Rules
+
+| Layer | Can import from SUT? | Knows about HTTP? | Has assertions? |
+|-------|---|---|---|
+| `specifications/` (Gherkin) | No | No | No |
+| `dsl/` (step defs) | No | No | No |
+| `driver/http/` | Yes | Yes | Yes |
+| `SpringIntegrationConfig` | Only `ApiApplication::class` | No | No |
+
+To swap the protocol, change the `@Import` in `SpringIntegrationConfig`. The specs and DSL stay untouched.

@@ -16,6 +16,9 @@ target/
 *.jar
 *.iml
 
+# Learnings (personal notes)
+/learnings/
+
 #System Files
 .DS_Store
 Thumbs.db
