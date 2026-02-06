@@ -119,3 +119,13 @@ The driver sits behind a `ProtocolDriver` interface. The current implementation 
 | `SpringIntegrationConfig` | Only `ApiApplication::class` | No | No |
 
 To swap the protocol, change the `@Import` in `SpringIntegrationConfig`. The specs and DSL stay untouched.
+
+## Adding a New Acceptance Test
+
+1. Create or extend a `.feature` file in `src/test/resources/acceptance/specifications/`
+2. Add step definitions in `dsl/` that call methods on `ProtocolDriver`
+3. Add the new methods to the `ProtocolDriver` interface
+4. Implement them in `HttpProtocolDriver` (own DTOs, own assertions, plain `RestTemplate`)
+5. If adding a new driver class, register it with `@Import` on `SpringIntegrationConfig`
+
+Run `just test-acceptance` to verify.
