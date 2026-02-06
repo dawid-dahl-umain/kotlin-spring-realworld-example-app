@@ -8,5 +8,5 @@ import org.springframework.context.annotation.Import
 
 @CucumberContextConfiguration
 @SpringBootTest(classes = [ApiApplication::class], webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import(HttpProtocolDriver::class)
+@Import(HttpProtocolDriver::class, DslConfig::class)
 class SpringIntegrationConfig
