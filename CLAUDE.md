@@ -21,7 +21,7 @@ just test-unit        # Run only unit tests
 just test-acceptance  # Run only acceptance tests
 just lint             # Lint all Kotlin files
 just format           # Auto-format all Kotlin files
-just check            # Run all tests, then lint and format
+just check            # Run all tests, format, then lint
 ```
 
 ## Acceptance Test Architecture (Three Layers)

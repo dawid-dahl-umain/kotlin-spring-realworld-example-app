@@ -39,5 +39,5 @@ lint: ensure-ktlint
 format: ensure-ktlint
     .ktlint/ktlint -F "src/**/*.kt"
 
-# Run all tests, then lint and format
-check: test lint format
+# Run all tests, format, then lint
+check: test format lint
