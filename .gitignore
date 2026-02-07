@@ -19,6 +19,9 @@ target/
 # Learnings (personal notes)
 /learnings/
 
+# ktlint binary
+/.ktlint/
+
 #System Files
 .DS_Store
 Thumbs.db

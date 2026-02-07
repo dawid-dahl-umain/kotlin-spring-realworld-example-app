@@ -19,6 +19,9 @@ just run              # Start the app on localhost:8080
 just test             # Run all tests (unit + acceptance)
 just test-unit        # Run only unit tests
 just test-acceptance  # Run only acceptance tests
+just lint             # Lint all Kotlin files
+just format           # Auto-format all Kotlin files
+just check            # Run all tests, then lint and format
 ```
 
 ## Acceptance Test Architecture (Three Layers)
