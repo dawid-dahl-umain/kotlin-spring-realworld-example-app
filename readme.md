@@ -174,10 +174,10 @@ To swap the protocol, change the `@Import` in `SpringIntegrationConfig`. The spe
 ### Test Environment Safety
 
 Acceptance tests are fully isolated and cannot cause side effects:
-- **Database:** H2 in-memory — created when the JVM starts, destroyed when it exits. No persistent database is touched
-- **Port:** Spring Boot starts on a random port (`WebEnvironment.RANDOM_PORT`) — no conflict with a running dev instance
-- **Network:** Only `localhost:{random-port}` — no external services, no outbound network calls
-- **Filesystem:** Tests don't write to disk. Only standard Maven `target/` output
+- **Database:** Tests use a dedicated database, separate from dev/production
+- **Port:** The app starts on its own port, isolated from any running instance
+- **Network:** No external services or outbound network calls
+- **Filesystem:** No writes beyond standard build output
 
 Running `just test-acceptance` is always safe.
 
