@@ -112,7 +112,7 @@ The DSL layer also owns **test isolation** via utilities in `dsl/utils/`:
 
 ### Layer 3: Driver
 
-The only layer that talks to the app. Makes HTTP calls, owns its own DTOs, does all assertions. If a driver method completes without throwing, the step passes. If it throws, the step fails.
+The only layer that talks to the app. Makes HTTP calls, owns its own DTOs, does all verification. If a driver method completes without throwing, the step passes. If it throws, the step fails.
 
 The driver holds only a single **last response** (status code + body), overwritten on every HTTP call. No accumulated state across steps. The SUT is the source of truth for state, not the test layers.
 
@@ -159,7 +159,7 @@ Currently the SUT uses H2 in-memory (`jdbc:h2:mem`), which starts empty on every
 
 ### Layer Responsibilities
 
-| Layer | Imports SUT? | Knows HTTP? | Has assertions? | Owns isolation? | Holds state? |
+| Layer | Imports SUT? | Knows HTTP? | Has verification? | Owns isolation? | Holds state? |
 |-------|---|---|---|---|---|
 | `specifications/` (Gherkin) | No | No | No | No | No |
 | `dsl/` (DSL) | No | No | No | Yes (aliasing) | Pending values within a scenario |

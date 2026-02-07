@@ -55,7 +55,7 @@ src/test/
 - Driver implementations go in `src/test/kotlin/acceptance/driver/`
 - DSL layer is pure routing: no assertions, no HTTP, no SUT knowledge
 - DSL layer owns test isolation via `DslContext` aliasing
-- All assertions and HTTP logic live in the driver layer only
+- All verification and HTTP logic live in the driver layer only
 - Write Gherkin in business language, not technical details
 - `ProtocolDriver` is injected into DSL classes by Spring DI (DSL never sees the HTTP implementation)
 - Assertion methods in both DSL and driver use the `confirm` prefix (e.g., `confirmArticlePublished`). DSL `confirm` method names match their driver counterparts 1:1

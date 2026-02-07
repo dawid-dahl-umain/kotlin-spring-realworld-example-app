@@ -4,7 +4,6 @@ import acceptance.driver.ProtocolDriver
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import org.junit.jupiter.api.Assertions.*
 import org.springframework.core.env.Environment
 import org.springframework.http.*
 import org.springframework.stereotype.Component
@@ -97,9 +96,9 @@ class HttpProtocolDriver(private val environment: Environment) : ProtocolDriver 
     }
 
     override fun confirmTagListContains(tag: String) {
-        assertEquals(HttpStatus.OK, lastResponse!!.statusCode)
+        if (lastResponse!!.statusCode != HttpStatus.OK) error("Expected 200 OK but got ${lastResponse!!.statusCode}")
         val tags = parseLastResponse<TagsResponse>().tags
-        assertTrue(tags.contains(tag), "Expected tag '$tag' in list: $tags")
+        if (!tags.contains(tag)) error("Expected tag '$tag' in list: $tags")
     }
 
     // --- User registration ---
@@ -110,26 +109,22 @@ class HttpProtocolDriver(private val environment: Environment) : ProtocolDriver 
     }
 
     override fun confirmUserRegistered() {
-        assertEquals(HttpStatus.OK, lastResponse!!.statusCode)
-        val user = parseLastResponse<UserResponse>().user
-        assertNotNull(user, "Expected user in response")
-        assertTrue(user!!.token.isNotEmpty(), "Expected non-empty JWT token")
+        if (lastResponse!!.statusCode != HttpStatus.OK) error("Expected 200 OK but got ${lastResponse!!.statusCode}")
+        val user = parseLastResponse<UserResponse>().user ?: error("Expected user in response")
+        if (user.token.isEmpty()) error("Expected non-empty JWT token")
     }
 
     override fun confirmRegistrationError(field: String) {
-        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, lastResponse!!.statusCode)
+        if (lastResponse!!.statusCode != HttpStatus.UNPROCESSABLE_ENTITY) error("Expected 422 but got ${lastResponse!!.statusCode}")
         val errors = parseLastResponse<ErrorResponse>().errors
-        assertTrue(
-            errors.containsKey(field),
-            "Expected error on field '$field' but got errors on: ${errors.keys}"
-        )
+        if (!errors.containsKey(field)) error("Expected error on field '$field' but got errors on: ${errors.keys}")
     }
 
     // --- Authentication ---
 
     override fun registerAndLogin(username: String, email: String, password: String) {
         registerUser(username, email, password)
-        assertEquals(HttpStatus.OK, lastResponse!!.statusCode, "Registration failed during login setup")
+        if (lastResponse!!.statusCode != HttpStatus.OK) error("Registration failed during login setup")
         authToken = parseLastResponse<UserResponse>().user!!.token
     }
 
@@ -167,63 +162,52 @@ class HttpProtocolDriver(private val environment: Environment) : ProtocolDriver 
     // --- Article confirmations ---
 
     override fun confirmArticlePublished() {
-        assertEquals(HttpStatus.OK, lastResponse!!.statusCode)
-        val article = parseLastResponse<ArticleResponse>().article
-        assertNotNull(article, "Expected article in response")
-        assertTrue(article!!.slug.isNotEmpty(), "Article should have a slug")
+        if (lastResponse!!.statusCode != HttpStatus.OK) error("Expected 200 OK but got ${lastResponse!!.statusCode}")
+        val article = parseLastResponse<ArticleResponse>().article ?: error("Expected article in response")
+        if (article.slug.isEmpty()) error("Article should have a slug")
     }
 
     override fun confirmArticleDetails(title: String, description: String, body: String) {
         val article = parseLastResponse<ArticleResponse>().article!!
-        assertEquals(title, article.title)
-        assertEquals(description, article.description)
-        assertEquals(body, article.body)
+        if (title != article.title) error("Expected title '$title' but got '${article.title}'")
+        if (description != article.description) error("Expected description '$description' but got '${article.description}'")
+        if (body != article.body) error("Expected body '$body' but got '${article.body}'")
     }
 
     override fun confirmArticleTags(expectedTags: List<String>) {
         val article = parseLastResponse<ArticleResponse>().article!!
-        assertEquals(expectedTags.sorted(), article.tagList.sorted(), "Article tags should match")
+        if (expectedTags.sorted() != article.tagList.sorted()) error("Article tags should match: expected ${expectedTags.sorted()} but got ${article.tagList.sorted()}")
     }
 
     override fun confirmArticleTitle(expectedTitle: String) {
         val article = parseLastResponse<ArticleResponse>().article!!
-        assertEquals(expectedTitle, article.title)
+        if (expectedTitle != article.title) error("Expected title '$expectedTitle' but got '${article.title}'")
     }
 
     override fun confirmArticleListMinSize(minCount: Int) {
-        assertEquals(HttpStatus.OK, lastResponse!!.statusCode)
+        if (lastResponse!!.statusCode != HttpStatus.OK) error("Expected 200 OK but got ${lastResponse!!.statusCode}")
         val articles = parseLastResponse<ArticlesResponse>().articles
-        assertTrue(
-            articles.size >= minCount,
-            "Expected at least $minCount article(s), got ${articles.size}"
-        )
+        if (articles.size < minCount) error("Expected at least $minCount article(s), got ${articles.size}")
     }
 
     override fun confirmArticleListContainsTitle(title: String) {
         val articles = parseLastResponse<ArticlesResponse>().articles
-        assertTrue(
-            articles.any { it.title == title },
-            "Expected article titled '$title' in list: ${articles.map { it.title }}"
-        )
+        if (articles.none { it.title == title }) error("Expected article titled '$title' in list: ${articles.map { it.title }}")
     }
 
     override fun confirmAllArticlesHaveTag(tag: String) {
         val articles = parseLastResponse<ArticlesResponse>().articles
-        assertTrue(articles.isNotEmpty(), "Article list should not be empty")
+        if (articles.isEmpty()) error("Article list should not be empty")
         articles.forEach { article ->
-            assertTrue(
-                article.tagList.contains(tag),
-                "Article '${article.title}' missing tag '$tag', has: ${article.tagList}"
-            )
+            if (!article.tagList.contains(tag)) error("Article '${article.title}' missing tag '$tag', has: ${article.tagList}")
         }
     }
 
     // --- Last response metadata ---
 
     override fun lastArticleSlug(): String {
-        val article = parseLastResponse<ArticleResponse>().article
-        assertNotNull(article, "No article in last response")
-        return article!!.slug
+        val article = parseLastResponse<ArticleResponse>().article ?: error("No article in last response")
+        return article.slug
     }
 
     override fun lastAuthToken(): String {
