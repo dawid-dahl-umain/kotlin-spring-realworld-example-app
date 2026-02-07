@@ -162,14 +162,13 @@ Currently the SUT uses H2 in-memory (`jdbc:h2:mem`), which starts empty on every
 
 ### Layer Responsibilities
 
-| Layer | Imports SUT? | Knows HTTP? | Has verification? | Owns isolation? | Holds state? |
-|-------|---|---|---|---|---|
-| `specifications/` (Gherkin) | No | No | No | No | No |
-| `dsl/` (DSL) | No | No | No | Yes (aliasing) | Pending values within a scenario |
-| `driver/http/` | No | Yes | Yes | No | Last response only |
-| `SpringIntegrationConfig` | Only `ApiApplication::class` | No | No | No | No |
+| Layer | Knows SUT? | Has verification? | Owns isolation? |
+|-------|---|---|---|
+| Specifications (Gherkin) | No | No | No |
+| DSL | No | No | Yes |
+| Driver | Yes | Yes | No |
 
-To swap the protocol, change the `@Import` in `SpringIntegrationConfig`. The specs and DSL stay untouched.
+Only the driver layer has knowledge of or dependence on the SUT. The specs and DSL are protocol-agnostic — to swap from HTTP to a CLI or UI driver, only the driver implementation changes.
 
 ### Test Environment Safety
 
