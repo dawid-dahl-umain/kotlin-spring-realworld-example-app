@@ -11,19 +11,23 @@ import io.realworld.model.inout.Register
 import io.realworld.model.inout.UpdateUser
 import io.realworld.repository.UserRepository
 import io.realworld.service.UserService
+import jakarta.validation.Valid
 import org.mindrot.jbcrypt.BCrypt
 import org.springframework.validation.BindException
 import org.springframework.validation.Errors
 import org.springframework.validation.FieldError
 import org.springframework.web.bind.annotation.*
-import jakarta.validation.Valid
 
 @RestController
-class UserHandler(val repository: UserRepository,
-                  val service: UserService) {
-
+class UserHandler(
+    val repository: UserRepository,
+    val service: UserService,
+) {
     @PostMapping("/api/users/login")
-    fun login(@Valid @RequestBody login: Login, errors: Errors): Any {
+    fun login(
+        @Valid @RequestBody login: Login,
+        errors: Errors,
+    ): Any {
         InvalidRequest.check(errors)
 
         try {
@@ -39,7 +43,10 @@ class UserHandler(val repository: UserRepository,
     }
 
     @PostMapping("/api/users")
-    fun register(@Valid @RequestBody register: Register, errors: Errors): Any {
+    fun register(
+        @Valid @RequestBody register: Register,
+        errors: Errors,
+    ): Any {
         InvalidRequest.check(errors)
 
         // check for duplicate user
@@ -47,8 +54,12 @@ class UserHandler(val repository: UserRepository,
         checkUserAvailability(registerErrors, register.email, register.username)
         InvalidRequest.check(registerErrors)
 
-        val user = User(username = register.username!!,
-                email = register.email!!, password = BCrypt.hashpw(register.password, BCrypt.gensalt()))
+        val user =
+            User(
+                username = register.username!!,
+                email = register.email!!,
+                password = BCrypt.hashpw(register.password, BCrypt.gensalt()),
+            )
         user.token = service.newToken(user)
 
         return view(repository.save(user))
@@ -60,7 +71,10 @@ class UserHandler(val repository: UserRepository,
 
     @ApiKeySecured
     @PutMapping("/api/user")
-    fun updateUser(@Valid @RequestBody user: UpdateUser, errors: Errors): Any {
+    fun updateUser(
+        @Valid @RequestBody user: UpdateUser,
+        errors: Errors,
+    ): Any {
         InvalidRequest.check(errors)
 
         val currentUser = service.currentUser()
@@ -83,9 +97,14 @@ class UserHandler(val repository: UserRepository,
         InvalidRequest.check(updateErrors)
 
         // update the user
-        val u = currentUser.copy(email = user.email ?: currentUser.email, username = user.username ?: currentUser.username,
-                password = BCrypt.hashpw(user.password, BCrypt.gensalt()), image = user.image ?: currentUser.image,
-                bio = user.bio ?: currentUser.bio)
+        val u =
+            currentUser.copy(
+                email = user.email ?: currentUser.email,
+                username = user.username ?: currentUser.username,
+                password = BCrypt.hashpw(user.password, BCrypt.gensalt()),
+                image = user.image ?: currentUser.image,
+                bio = user.bio ?: currentUser.bio,
+            )
         // update token only if email changed
         if (currentUser.email != u.email) {
             u.token = service.newToken(u)
@@ -94,7 +113,11 @@ class UserHandler(val repository: UserRepository,
         return view(repository.save(u))
     }
 
-    private fun checkUserAvailability(errors: BindException, email: String?, username: String?) {
+    private fun checkUserAvailability(
+        errors: BindException,
+        email: String?,
+        username: String?,
+    ) {
         email?.let {
             if (repository.existsByEmail(it)) {
                 errors.addError(FieldError("", "email", "already taken"))

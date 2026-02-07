@@ -1,3 +1,5 @@
 package io.realworld.client.response
 
-data class OutTag(var tags: List<String> = listOf())
+data class OutTag(
+    var tags: List<String> = listOf(),
+)

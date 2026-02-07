@@ -11,7 +11,8 @@ class Login(
     @Size(min = 1, message = "can't be empty")
     @Pattern(
         regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,4}$",
-        message = "must be a valid email"
-    ) var email: String?, @NotNull(message = "can't be missing")
-    @Size(min = 1, message = "can't be empty") var password: String?
+        message = "must be a valid email",
+    ) var email: String?,
+    @NotNull(message = "can't be missing")
+    @Size(min = 1, message = "can't be empty") var password: String?,
 )

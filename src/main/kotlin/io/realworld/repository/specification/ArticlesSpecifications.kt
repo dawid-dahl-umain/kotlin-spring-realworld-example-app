@@ -3,12 +3,16 @@ package io.realworld.repository.specification
 import io.realworld.model.Article
 import io.realworld.model.Tag
 import io.realworld.model.User
-import org.springframework.data.jpa.domain.Specification
 import jakarta.persistence.criteria.Predicate
+import org.springframework.data.jpa.domain.Specification
 
 object ArticlesSpecifications {
-    fun lastArticles(tag: Tag?, author: User?, fav: User?): Specification<Article> {
-        return Specification { root, _, cb ->
+    fun lastArticles(
+        tag: Tag?,
+        author: User?,
+        fav: User?,
+    ): Specification<Article> =
+        Specification { root, _, cb ->
             val predicates = mutableListOf<Predicate>()
 
             tag?.let {
@@ -28,5 +32,4 @@ object ArticlesSpecifications {
 
             cb.and(*predicates.toTypedArray())
         }
-    }
 }

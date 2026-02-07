@@ -3,8 +3,9 @@ package acceptance
 import acceptance.driver.ProtocolDriver
 import io.cucumber.java.Before
 
-class GlobalSetupHook(private val driver: ProtocolDriver) {
-
+class GlobalSetupHook(
+    private val driver: ProtocolDriver,
+) {
     @Before(order = 0)
     fun registerSharedUser() {
         if (initialized) return

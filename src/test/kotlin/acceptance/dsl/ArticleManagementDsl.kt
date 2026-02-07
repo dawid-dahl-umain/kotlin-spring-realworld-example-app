@@ -9,9 +9,8 @@ import io.cucumber.java.en.When
 
 class ArticleManagementDsl(
     private val context: DslContext,
-    private val driver: ProtocolDriver
+    private val driver: ProtocolDriver,
 ) {
-
     private var lastPublishedSlug: String = ""
 
     @Given("the author has published an article titled {string}")
@@ -22,7 +21,10 @@ class ArticleManagementDsl(
     }
 
     @Given("the author has published an article titled {string} with tag {string}")
-    fun publishArticleWithTitleAndTag(title: String, tag: String) {
+    fun publishArticleWithTitleAndTag(
+        title: String,
+        tag: String,
+    ) {
         val aliasedTitle = context.alias(title)
         val aliasedTag = context.alias(tag)
         driver.createArticle(aliasedTitle, "Description for $aliasedTitle", "Body content for $aliasedTitle", listOf(aliasedTag))

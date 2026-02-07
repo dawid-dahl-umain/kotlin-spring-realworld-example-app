@@ -20,7 +20,11 @@ import org.springframework.web.servlet.HandlerInterceptor
  */
 class ExposeResponseInterceptor : HandlerInterceptor {
     @Throws(ServletException::class)
-    override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
+    override fun preHandle(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        handler: Any,
+    ): Boolean {
         request.setAttribute(KEY, response)
         return true
     }

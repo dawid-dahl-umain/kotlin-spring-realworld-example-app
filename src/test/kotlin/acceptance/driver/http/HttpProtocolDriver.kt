@@ -12,18 +12,26 @@ import org.springframework.web.client.RestTemplate
 
 // --- Response DTOs ---
 
-data class TagsResponse(val tags: List<String> = emptyList())
+data class TagsResponse(
+    val tags: List<String> = emptyList(),
+)
 
-data class UserResponse(val user: UserBody? = null)
+data class UserResponse(
+    val user: UserBody? = null,
+)
+
 data class UserBody(
     val email: String = "",
     val token: String = "",
     val username: String = "",
     val bio: String = "",
-    val image: String = ""
+    val image: String = "",
 )
 
-data class ArticleResponse(val article: ArticleBody? = null)
+data class ArticleResponse(
+    val article: ArticleBody? = null,
+)
+
 data class ArticleBody(
     val slug: String = "",
     val title: String = "",
@@ -33,29 +41,33 @@ data class ArticleBody(
     val createdAt: String = "",
     val updatedAt: String = "",
     val favorited: Boolean = false,
-    val favoritesCount: Int = 0
+    val favoritesCount: Int = 0,
 )
 
 data class ArticlesResponse(
     val articles: List<ArticleBody> = emptyList(),
-    val articlesCount: Int = 0
+    val articlesCount: Int = 0,
 )
 
-data class ErrorResponse(val errors: Map<String, List<String>> = emptyMap())
+data class ErrorResponse(
+    val errors: Map<String, List<String>> = emptyMap(),
+)
 
 // --- Last response holder ---
 
 data class LastResponse(
     val statusCode: HttpStatusCode,
-    val body: String
+    val body: String,
 )
 
 @Component
-class HttpProtocolDriver(private val environment: Environment) : ProtocolDriver {
-
+class HttpProtocolDriver(
+    private val environment: Environment,
+) : ProtocolDriver {
     private val restTemplate = RestTemplate()
-    private val mapper = jacksonObjectMapper()
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    private val mapper =
+        jacksonObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     private val baseUrl: String get() = "http://localhost:${environment.getProperty("local.server.port")}"
 
     private var lastResponse: LastResponse? = null
@@ -76,7 +88,12 @@ class HttpProtocolDriver(private val environment: Environment) : ProtocolDriver 
         return headers
     }
 
-    private fun executeRequest(method: HttpMethod, url: String, body: Any? = null, headers: HttpHeaders = jsonHeaders()) {
+    private fun executeRequest(
+        method: HttpMethod,
+        url: String,
+        body: Any? = null,
+        headers: HttpHeaders = jsonHeaders(),
+    ) {
         val entity = HttpEntity(body, headers)
         try {
             val response = restTemplate.exchange(url, method, entity, String::class.java)
@@ -86,8 +103,7 @@ class HttpProtocolDriver(private val environment: Environment) : ProtocolDriver 
         }
     }
 
-    private inline fun <reified T> parseLastResponse(): T =
-        mapper.readValue(lastResponse!!.body)
+    private inline fun <reified T> parseLastResponse(): T = mapper.readValue(lastResponse!!.body)
 
     // --- Tags ---
 
@@ -103,7 +119,11 @@ class HttpProtocolDriver(private val environment: Environment) : ProtocolDriver 
 
     // --- User registration ---
 
-    override fun registerUser(username: String, email: String, password: String) {
+    override fun registerUser(
+        username: String,
+        email: String,
+        password: String,
+    ) {
         val body = mapOf("user" to mapOf("username" to username, "email" to email, "password" to password))
         executeRequest(HttpMethod.POST, "$baseUrl/api/users", body)
     }
@@ -122,7 +142,11 @@ class HttpProtocolDriver(private val environment: Environment) : ProtocolDriver 
 
     // --- Authentication ---
 
-    override fun registerAndLogin(username: String, email: String, password: String) {
+    override fun registerAndLogin(
+        username: String,
+        email: String,
+        password: String,
+    ) {
         registerUser(username, email, password)
         if (lastResponse!!.statusCode != HttpStatus.OK) error("Registration failed during login setup")
         authToken = parseLastResponse<UserResponse>().user!!.token
@@ -134,12 +158,18 @@ class HttpProtocolDriver(private val environment: Environment) : ProtocolDriver 
 
     // --- Article creation & retrieval ---
 
-    override fun createArticle(title: String, description: String, body: String, tags: List<String>) {
-        val articleBody = mutableMapOf<String, Any>(
-            "title" to title,
-            "description" to description,
-            "body" to body
-        )
+    override fun createArticle(
+        title: String,
+        description: String,
+        body: String,
+        tags: List<String>,
+    ) {
+        val articleBody =
+            mutableMapOf<String, Any>(
+                "title" to title,
+                "description" to description,
+                "body" to body,
+            )
         if (tags.isNotEmpty()) {
             articleBody["tagList"] = tags
         }
@@ -167,7 +197,11 @@ class HttpProtocolDriver(private val environment: Environment) : ProtocolDriver 
         if (article.slug.isEmpty()) error("Article should have a slug")
     }
 
-    override fun confirmArticleDetails(title: String, description: String, body: String) {
+    override fun confirmArticleDetails(
+        title: String,
+        description: String,
+        body: String,
+    ) {
         val article = parseLastResponse<ArticleResponse>().article!!
         if (title != article.title) error("Expected title '$title' but got '${article.title}'")
         if (description != article.description) error("Expected description '$description' but got '${article.description}'")
@@ -176,7 +210,11 @@ class HttpProtocolDriver(private val environment: Environment) : ProtocolDriver 
 
     override fun confirmArticleTags(expectedTags: List<String>) {
         val article = parseLastResponse<ArticleResponse>().article!!
-        if (expectedTags.sorted() != article.tagList.sorted()) error("Article tags should match: expected ${expectedTags.sorted()} but got ${article.tagList.sorted()}")
+        if (expectedTags.sorted() !=
+            article.tagList.sorted()
+        ) {
+            error("Article tags should match: expected ${expectedTags.sorted()} but got ${article.tagList.sorted()}")
+        }
     }
 
     override fun confirmArticleTitle(expectedTitle: String) {
@@ -210,7 +248,5 @@ class HttpProtocolDriver(private val environment: Environment) : ProtocolDriver 
         return article.slug
     }
 
-    override fun lastAuthToken(): String {
-        return authToken ?: error("No auth token available")
-    }
+    override fun lastAuthToken(): String = authToken ?: error("No auth token available")
 }

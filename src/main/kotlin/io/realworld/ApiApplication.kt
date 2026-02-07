@@ -12,23 +12,22 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
-
 @Configuration
 @EnableCaching
 @SpringBootApplication
 class ApiApplication : WebMvcConfigurer {
-
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(exposeResponseInterceptor())
     }
 
     override fun addCorsMappings(registry: CorsRegistry) {
-        registry.addMapping("/api/**")
-                .allowedOrigins("*")
-                .allowedMethods("*")
-                .allowedHeaders("*")
-                .allowCredentials(false)
-                .maxAge(3600)
+        registry
+            .addMapping("/api/**")
+            .allowedOrigins("*")
+            .allowedMethods("*")
+            .allowedHeaders("*")
+            .allowCredentials(false)
+            .maxAge(3600)
         super.addCorsMappings(registry)
     }
 
@@ -49,6 +48,3 @@ class ApiApplication : WebMvcConfigurer {
 fun main(args: Array<String>) {
     SpringApplication.run(ApiApplication::class.java, *args)
 }
-
-
-

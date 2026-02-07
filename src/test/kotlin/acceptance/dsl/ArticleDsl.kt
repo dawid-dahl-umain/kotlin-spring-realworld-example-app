@@ -11,9 +11,8 @@ import io.cucumber.java.en.When
 
 class ArticleDsl(
     private val context: DslContext,
-    private val driver: ProtocolDriver
+    private val driver: ProtocolDriver,
 ) {
-
     private var pendingTitle: String = ""
     private var pendingDescription: String = ""
     private var pendingBody: String = ""

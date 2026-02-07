@@ -7,9 +7,8 @@ import io.cucumber.java.en.When
 
 class TagDsl(
     private val context: DslContext,
-    private val driver: ProtocolDriver
+    private val driver: ProtocolDriver,
 ) {
-
     @When("a client requests the list of tags")
     fun requestTags() {
         driver.getTags()

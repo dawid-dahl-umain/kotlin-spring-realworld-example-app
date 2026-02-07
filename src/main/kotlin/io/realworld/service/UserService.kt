@@ -12,10 +12,11 @@ import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-class UserService(val userRepository: UserRepository,
-                  @Value("\${jwt.secret}") val jwtSecret: String,
-                  @Value("\${jwt.issuer}") val jwtIssuer: String) {
-
+class UserService(
+    val userRepository: UserRepository,
+    @Value("\${jwt.secret}") val jwtSecret: String,
+    @Value("\${jwt.issuer}") val jwtIssuer: String,
+) {
     val currentUser = ThreadLocal<User>()
 
     fun findByToken(token: String) = userRepository.findByToken(token)
@@ -29,20 +30,28 @@ class UserService(val userRepository: UserRepository,
 
     fun currentUser(): User = currentUser.get()
 
-    fun newToken(user: User): String {
-        return Jwts.builder()
-                .setIssuedAt(Date())
-                .setSubject(user.email)
-                .setIssuer(jwtIssuer)
-                .setExpiration(Date(System.currentTimeMillis() + 10 * 24 * 60 * 60 * 1000)) // 10 days
-                .signWith(SignatureAlgorithm.HS256, jwtSecret).compact()
-    }
+    fun newToken(user: User): String =
+        Jwts
+            .builder()
+            .setIssuedAt(Date())
+            .setSubject(user.email)
+            .setIssuer(jwtIssuer)
+            .setExpiration(Date(System.currentTimeMillis() + 10 * 24 * 60 * 60 * 1000)) // 10 days
+            .signWith(SignatureAlgorithm.HS256, jwtSecret)
+            .compact()
 
-    fun validToken(token: String, user: User): Boolean {
-        val claims = Jwts.parser().setSigningKey(jwtSecret)
-                .parseClaimsJws(token).body
-        return claims.subject == user.email && claims.issuer == jwtIssuer
-                && Date().before(claims.expiration)
+    fun validToken(
+        token: String,
+        user: User,
+    ): Boolean {
+        val claims =
+            Jwts
+                .parser()
+                .setSigningKey(jwtSecret)
+                .parseClaimsJws(token)
+                .body
+        return claims.subject == user.email && claims.issuer == jwtIssuer &&
+            Date().before(claims.expiration)
     }
 
     fun updateToken(user: User): User {
@@ -59,5 +68,4 @@ class UserService(val userRepository: UserRepository,
         }
         throw InvalidLoginException("email", "unknown email")
     }
-
 }

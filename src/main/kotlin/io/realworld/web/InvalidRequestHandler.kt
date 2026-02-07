@@ -30,10 +30,11 @@ class InvalidRequestHandler {
     fun processValidationError(ex: InvalidException): Any {
         val errors = mutableMapOf<String, MutableList<String>>()
         ex.errors?.fieldErrors?.forEach {
-            if (errors.containsKey(it.field))
+            if (errors.containsKey(it.field)) {
                 errors[it.field]!!.add(it.defaultMessage)
-            else
+            } else {
                 errors[it.field] = mutableListOf(it.defaultMessage)
+            }
         }
         return mapOf("errors" to errors)
     }

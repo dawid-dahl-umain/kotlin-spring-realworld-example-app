@@ -6,4 +6,6 @@ import java.lang.annotation.Inherited
 @Inherited
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class ApiKeySecured(val mandatory: Boolean = true)
+annotation class ApiKeySecured(
+    val mandatory: Boolean = true,
+)

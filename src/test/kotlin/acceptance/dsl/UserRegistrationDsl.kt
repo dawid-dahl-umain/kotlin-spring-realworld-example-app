@@ -8,25 +8,32 @@ import io.cucumber.java.en.When
 
 class UserRegistrationDsl(
     private val context: DslContext,
-    private val driver: ProtocolDriver
+    private val driver: ProtocolDriver,
 ) {
-
     @Given("a user already exists with username {string}, email {string}, and password {string}")
-    fun createExistingUser(username: String, email: String, password: String) {
+    fun createExistingUser(
+        username: String,
+        email: String,
+        password: String,
+    ) {
         driver.registerUser(
             context.alias(username),
             context.alias(email),
-            password
+            password,
         )
         driver.confirmUserRegistered()
     }
 
     @When("a new user registers with username {string}, email {string}, and password {string}")
-    fun registerUser(username: String, email: String, password: String) {
+    fun registerUser(
+        username: String,
+        email: String,
+        password: String,
+    ) {
         driver.registerUser(
             context.alias(username),
             context.alias(email),
-            password
+            password,
         )
     }
 

@@ -8,8 +8,16 @@ import org.springframework.data.repository.PagingAndSortingRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface ArticleRepository : CrudRepository<Article, Long>, PagingAndSortingRepository<Article, Long>, JpaSpecificationExecutor<Article> {
+interface ArticleRepository :
+    CrudRepository<Article, Long>,
+    PagingAndSortingRepository<Article, Long>,
+    JpaSpecificationExecutor<Article> {
     fun existsBySlug(slug: String): Boolean
+
     fun findBySlug(slug: String): Article?
-    fun findByAuthorIdInOrderByCreatedAtDesc(ids: List<Long>, pageable: Pageable): List<Article>
+
+    fun findByAuthorIdInOrderByCreatedAtDesc(
+        ids: List<Long>,
+        pageable: Pageable,
+    ): List<Article>
 }

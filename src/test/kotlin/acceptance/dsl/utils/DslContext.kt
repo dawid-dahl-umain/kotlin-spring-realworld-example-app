@@ -3,14 +3,18 @@ package acceptance.dsl.utils
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
-class DslContext(private val workerId: String? = null) {
+class DslContext(
+    private val workerId: String? = null,
+) {
     private val localAliases = mutableMapOf<String, String>()
     private val localSequences = mutableMapOf<String, AtomicInteger>()
 
-    fun alias(name: String): String =
-        localAliases.getOrPut(name) { mintAlias(name) }
+    fun alias(name: String): String = localAliases.getOrPut(name) { mintAlias(name) }
 
-    fun sequenceNumberForName(name: String, start: Int): String {
+    fun sequenceNumberForName(
+        name: String,
+        start: Int,
+    ): String {
         val counter = localSequences.getOrPut(name) { AtomicInteger(start) }
         return counter.getAndIncrement().toString()
     }
@@ -28,8 +32,7 @@ class DslContext(private val workerId: String? = null) {
     companion object {
         private val globalSequences = ConcurrentHashMap<String, AtomicInteger>()
 
-        private fun globalSequenceFor(name: String): AtomicInteger =
-            globalSequences.getOrPut(name) { AtomicInteger(0) }
+        private fun globalSequenceFor(name: String): AtomicInteger = globalSequences.getOrPut(name) { AtomicInteger(0) }
 
         internal fun resetGlobalState() {
             globalSequences.clear()

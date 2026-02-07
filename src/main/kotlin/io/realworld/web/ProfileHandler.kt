@@ -9,12 +9,15 @@ import io.realworld.service.UserService
 import org.springframework.web.bind.annotation.*
 
 @RestController
-class ProfileHandler(val userRepository: UserRepository,
-                     val userService: UserService) {
-
+class ProfileHandler(
+    val userRepository: UserRepository,
+    val userService: UserService,
+) {
     @ApiKeySecured(mandatory = false)
     @GetMapping("/api/profiles/{username}")
-    fun profile(@PathVariable username: String): Any {
+    fun profile(
+        @PathVariable username: String,
+    ): Any {
         userRepository.findByUsername(username)?.let {
             return view(it, userService.currentUser())
         }
@@ -23,7 +26,9 @@ class ProfileHandler(val userRepository: UserRepository,
 
     @ApiKeySecured
     @PostMapping("/api/profiles/{username}/follow")
-    fun follow(@PathVariable username: String): Any {
+    fun follow(
+        @PathVariable username: String,
+    ): Any {
         userRepository.findByUsername(username)?.let {
             var currentUser = userService.currentUser()
             if (!currentUser.follows.contains(it)) {
@@ -37,7 +42,9 @@ class ProfileHandler(val userRepository: UserRepository,
 
     @ApiKeySecured
     @DeleteMapping("/api/profiles/{username}/follow")
-    fun unfollow(@PathVariable username: String): Any {
+    fun unfollow(
+        @PathVariable username: String,
+    ): Any {
         userRepository.findByUsername(username)?.let {
             var currentUser = userService.currentUser()
             if (currentUser.follows.contains(it)) {
@@ -49,6 +56,8 @@ class ProfileHandler(val userRepository: UserRepository,
         throw NotFoundException()
     }
 
-    fun view(user: User, currentUser: User) = mapOf("profile" to Profile.fromUser(user, currentUser))
-
+    fun view(
+        user: User,
+        currentUser: User,
+    ) = mapOf("profile" to Profile.fromUser(user, currentUser))
 }

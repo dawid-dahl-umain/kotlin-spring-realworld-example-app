@@ -2,6 +2,8 @@ package io.realworld.jwt
 
 import io.realworld.model.User
 import io.realworld.service.UserService
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
@@ -12,8 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.util.StringUtils
 import org.springframework.web.bind.annotation.ResponseStatus
-import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.http.HttpServletResponse
 
 /**
  * Aspect whose goal is to check automatically that methods
@@ -29,8 +29,9 @@ import jakarta.servlet.http.HttpServletResponse
  */
 @Aspect
 @Component
-class ApiKeySecuredAspect(@Autowired val userService: UserService) {
-
+class ApiKeySecuredAspect(
+    @Autowired val userService: UserService,
+) {
     @Autowired
     lateinit var request: HttpServletRequest
 
@@ -41,8 +42,9 @@ class ApiKeySecuredAspect(@Autowired val userService: UserService) {
     @Around("securedApiPointcut()")
     @Throws(Throwable::class)
     fun aroundSecuredApiPointcut(joinPoint: ProceedingJoinPoint): Any? {
-        if (request.method == "OPTIONS")
+        if (request.method == "OPTIONS") {
             return joinPoint.proceed()
+        }
 
         // see the ExposeResponseInterceptor class.
         val response = request.getAttribute(ExposeResponseInterceptor.KEY) as HttpServletResponse
@@ -89,8 +91,9 @@ class ApiKeySecuredAspect(@Autowired val userService: UserService) {
                 if (anno.mandatory) {
                     issueError(response)
                     return null
-                } else
+                } else {
                     user = User()
+                }
             }
         }
 
@@ -112,15 +115,16 @@ class ApiKeySecuredAspect(@Autowired val userService: UserService) {
             // check for custom exception
             val rs = e.javaClass.getAnnotation(ResponseStatus::class.java)
             if (rs != null) {
-                LOG.error("ERROR accessing resource, reason: '{}', status: {}.",
-                        if (!StringUtils.hasText(e.message)) rs.reason else e.message,
-                        rs.value)
+                LOG.error(
+                    "ERROR accessing resource, reason: '{}', status: {}.",
+                    if (!StringUtils.hasText(e.message)) rs.reason else e.message,
+                    rs.value,
+                )
             } else {
                 LOG.error("ERROR accessing resource")
             }
             throw e
         }
-
     }
 
     private fun issueError(response: HttpServletResponse) {
@@ -130,9 +134,13 @@ class ApiKeySecuredAspect(@Autowired val userService: UserService) {
         response.writer.flush()
     }
 
-    fun setStatus(response: HttpServletResponse?, sc: Int) {
-        if (response != null)
+    fun setStatus(
+        response: HttpServletResponse?,
+        sc: Int,
+    ) {
+        if (response != null) {
             response.status = sc
+        }
     }
 
     companion object {
