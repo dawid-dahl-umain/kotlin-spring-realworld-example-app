@@ -162,11 +162,13 @@ Currently the SUT uses H2 in-memory (`jdbc:h2:mem`), which starts empty on every
 
 ### Layer Responsibilities
 
-| Layer | Knows SUT? | Has verification? | Owns isolation? |
-|-------|---|---|---|
-| Specifications (Gherkin) | No | No | No |
-| DSL | No | No | Yes |
-| Driver | Yes | Yes | No |
+| Layer | Knows SUT? | Has verification? | Owns isolation? | Holds state? |
+|-------|---|---|---|---|
+| Specifications (Gherkin) | No | No | No | No |
+| DSL | No | No | Yes | No |
+| Driver | Yes | Yes | No | No* |
+
+\* The SUT is the source of truth for state, not the test layers. A driver implementation may hold transient data (e.g. the HTTP driver keeps the last response), but no layer accumulates state across steps.
 
 Only the driver layer has knowledge of or dependence on the SUT. The specs and DSL are protocol-agnostic — to swap from HTTP to a CLI or UI driver, only the driver implementation changes.
 
