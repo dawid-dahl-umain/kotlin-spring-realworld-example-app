@@ -19,4 +19,4 @@ test-unit:
 
 # Run only acceptance tests (Cucumber BDD)
 test-acceptance:
-    ./mvnw verify -Dsurefire.skip
+    ./mvnw verify -DskipUnitTests=true

@@ -61,12 +61,7 @@ Cucumber BDD tests that treat the app as a black box: boot it up, hit it over HT
 
 ## Unit Test Architecture
 
-Standard JUnit 5 tests that live alongside the app code. They can import services, repositories, and models directly; no HTTP involved. Spring Boot loads the application context, and tests call internal methods and assert results.
-
-```
-src/test/kotlin/io/realworld/
-└── ApiApplicationTests.kt    <- JUnit 5, @SpringBootTest
-```
+Pure JUnit 5 tests. No Spring context, no HTTP, no database. Run by Maven **Surefire** during the `test` phase.
 
 ## Acceptance Test Architecture
 
