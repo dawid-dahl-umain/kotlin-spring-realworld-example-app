@@ -133,6 +133,10 @@ class HttpProtocolDriver(private val environment: Environment) : ProtocolDriver 
         authToken = parseLastResponse<UserResponse>().user!!.token
     }
 
+    override fun loginWithToken(token: String) {
+        authToken = token
+    }
+
     // --- Article creation & retrieval ---
 
     override fun createArticle(title: String, description: String, body: String, tags: List<String>) {
@@ -220,5 +224,9 @@ class HttpProtocolDriver(private val environment: Environment) : ProtocolDriver 
         val article = parseLastResponse<ArticleResponse>().article
         assertNotNull(article, "No article in last response")
         return article!!.slug
+    }
+
+    override fun lastAuthToken(): String {
+        return authToken ?: error("No auth token available")
     }
 }

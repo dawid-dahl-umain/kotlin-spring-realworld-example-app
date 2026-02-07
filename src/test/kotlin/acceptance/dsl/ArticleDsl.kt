@@ -1,5 +1,6 @@
 package acceptance.dsl
 
+import acceptance.GlobalSetupHook
 import acceptance.driver.ProtocolDriver
 import acceptance.dsl.utils.DslContext
 import io.cucumber.datatable.DataTable
@@ -20,8 +21,7 @@ class ArticleDsl(
 
     @Given("a registered user is logged in")
     fun registerAndLoginUser() {
-        val username = context.alias("testuser")
-        driver.registerAndLogin(username, "$username@test.com", "password123")
+        driver.loginWithToken(GlobalSetupHook.sharedToken)
     }
 
     @When("the author creates an article with the following details:")

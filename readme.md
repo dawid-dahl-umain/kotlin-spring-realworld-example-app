@@ -76,6 +76,7 @@ src/test/
     ├── CucumberIT.kt             <- test runner (Failsafe picks up *IT classes)
     ├── SpringIntegrationConfig.kt
     ├── DslConfig.kt              <- scenario-scoped DslContext bean
+    ├── GlobalSetupHook.kt        <- @Before(order=0) hook for shared state (e.g. JWT)
     ├── dsl/                      <- Layer 2: DSL (routing + aliasing)
     │   ├── *Dsl.kt
     │   └── utils/                <- test isolation utilities
@@ -123,6 +124,29 @@ Every scenario is **functionally isolated**: it creates its own data and has no 
 
 The DSL layer enforces this by aliasing all identity values (usernames, emails, article titles, tags) through `DslContext`, so no two scenarios share data — even when the Gherkin uses the same readable names.
 
+### Shared State Across Scenarios
+
+Some setup (like user registration) is too expensive to repeat per scenario. We do it once and reuse the result.
+
+**How the shared state gets created:**
+- `GlobalSetupHook` has a `@Before(order=0)` Cucumber hook. `order=0` means it runs before any other hooks or steps in every scenario
+- On the very first scenario, it registers a user via the driver and stores the JWT in a `companion object` field (`sharedToken`). It then sets `initialized = true`
+- On every subsequent scenario, the hook fires again but sees `initialized == true` and returns immediately — no HTTP call, no duplicate registration
+- Because this runs `@Before` every scenario, the shared state is guaranteed to exist before any step that needs it
+
+**How a scenario uses it:**
+- Gherkin says `Given a registered user is logged in` — business language, no mention of sharing
+- The DSL step reads `GlobalSetupHook.sharedToken` and calls `driver.loginWithToken(token)`
+- The driver sets `authToken` directly (no HTTP call) — all subsequent requests in that scenario are authenticated
+
+**Why `@Volatile` and `companion object`:**
+- `companion object` makes the field survive across scenarios (Cucumber creates a new hook instance per scenario, but companion fields are static — they persist for the whole test run)
+- `@Volatile` ensures that if scenarios ever run on different threads, they always see the latest value — without it, a thread could see stale/empty data
+
+**Adding new shared state:** follow the same pattern — add it to `GlobalSetupHook`'s companion object, guard it with the `initialized` flag, read it in the DSL, pass it to the driver.
+
+**What NOT to share:** test data (articles, tags, comments). Every scenario creates its own data via `DslContext` aliasing. Only share expensive, idempotent setup like authentication tokens.
+
 ### Database Lifecycle
 
 Currently the SUT uses H2 in-memory (`jdbc:h2:mem`), which starts empty on every test run and is destroyed when the JVM exits. Data accumulates during the run but each scenario's data is uniquely aliased, so there are no collisions.
@@ -143,6 +167,16 @@ Currently the SUT uses H2 in-memory (`jdbc:h2:mem`), which starts empty on every
 | `SpringIntegrationConfig` | Only `ApiApplication::class` | No | No | No | No |
 
 To swap the protocol, change the `@Import` in `SpringIntegrationConfig`. The specs and DSL stay untouched.
+
+### Test Environment Safety
+
+Acceptance tests are fully isolated and cannot cause side effects:
+- **Database:** H2 in-memory — created when the JVM starts, destroyed when it exits. No persistent database is touched
+- **Port:** Spring Boot starts on a random port (`WebEnvironment.RANDOM_PORT`) — no conflict with a running dev instance
+- **Network:** Only `localhost:{random-port}` — no external services, no outbound network calls
+- **Filesystem:** Tests don't write to disk. Only standard Maven `target/` output
+
+Running `just test-acceptance` is always safe.
 
 ## Adding a New Acceptance Test
 

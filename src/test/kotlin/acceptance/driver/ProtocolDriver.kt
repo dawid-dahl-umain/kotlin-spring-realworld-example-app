@@ -12,6 +12,7 @@ interface ProtocolDriver {
 
     // Authentication
     fun registerAndLogin(username: String, email: String, password: String)
+    fun loginWithToken(token: String)
 
     // Article creation & retrieval
     fun createArticle(title: String, description: String, body: String, tags: List<String> = emptyList())
@@ -30,4 +31,5 @@ interface ProtocolDriver {
 
     // Last response metadata
     fun lastArticleSlug(): String
+    fun lastAuthToken(): String
 }
