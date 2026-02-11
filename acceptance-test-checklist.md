@@ -126,7 +126,7 @@ The one permitted exception to "no shared state." Use sparingly.
 
 - [ ] All external services we do not control (third-party APIs, payment providers, etc.) are **mocked by default** — no flag or configuration needed for the default path
 - [ ] If a scenario is intended to run against a real external service, it is tagged (e.g., `@live-safe`) at the **scenario level**, not the feature level
-- [ ] Only **read-only** operations (GETs, queries) are tagged as live-safe — mutations in systems we don't control are not tagged unless the team explicitly decides otherwise
+- [ ] **Prefer read-only operations** (GETs, queries) for live-safe tagging. Mutations in external systems require more caution, but are acceptable when the external service provides test/sandbox endpoints or when the team explicitly decides the risk is manageable
 - [ ] Live mode is activated only via an explicit opt-in flag (environment variable, system property, or similar) — it is never the default
 
 ---

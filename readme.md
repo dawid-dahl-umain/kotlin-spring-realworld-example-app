@@ -208,7 +208,7 @@ Rather than maintaining a separate contract test suite, we reuse existing accept
 1. **No flag = mocked.** The default run always uses stubs. Live mode is never implicit.
 2. **Only tagged scenarios run in live mode.** Untagged scenarios are skipped entirely when the live flag is active. In the default mocked mode, all scenarios run regardless of tags.
 3. **Tags are per-scenario, not per-feature.** Each scenario is individually assessed and marked. This is a deliberate decision by the developer, not a blanket toggle.
-4. **Prefer read-only scenarios.** GET requests and other read-only operations are generally safe against real services. POST/PUT/DELETE operations that mutate state in external systems should almost never be tagged live-safe.
+4. **Prefer read-only scenarios.** GET requests and other read-only operations are generally the safest choice. Mutations in external systems require more caution, but are acceptable when the external service provides test/sandbox endpoints or when the team explicitly decides the risk is manageable.
 5. **Live failures are informational.** A failure in live mode means the external contract may have changed — it does not necessarily mean our code is broken. Developers investigate and decide how to respond: update the integration, pin an API version, add a workaround, or accept the change. There is no single correct response.
 
 **Pseudocode:**
