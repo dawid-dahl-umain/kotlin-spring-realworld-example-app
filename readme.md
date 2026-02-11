@@ -68,6 +68,14 @@ Pure JUnit 5 tests. No Spring context, no HTTP, no database. Run by Maven **Sure
 
 ## Acceptance Test Architecture
 
+### Project Structure
+
+This is a single-module project. All acceptance test code lives under one test directory.
+
+For **multi-module projects (monorepos)**, the structure scales differently — see [Multi-Module Structure](#multi-module-structure) below.
+
+### Single-Module Layout
+
 Three layers, each with a clear responsibility:
 
 ```
@@ -245,6 +253,85 @@ else:
 - Teams get real contract verification with minimal overhead
 
 This capability is not yet implemented. The above describes the intended design for when external dependencies are introduced.
+
+## Multi-Module Structure
+
+In a monorepo with multiple domain modules (orders, loyalty, users, etc.), each module gets its own three layers for domain-specific behavior. Shared utilities live in a separate module that all acceptance tests depend on.
+
+### Structure
+
+```
+modules/
+├── orders/
+│   └── src/test/
+│       ├── resources/acceptance/specifications/  # Orders domain Gherkin
+│       ├── kotlin/acceptance/dsl/                # Orders domain DSL
+│       └── kotlin/acceptance/driver/             # Orders domain driver
+├── loyalty/
+│   └── src/test/
+│       ├── resources/acceptance/specifications/  # Loyalty domain Gherkin
+│       ├── kotlin/acceptance/dsl/                # Loyalty domain DSL
+│       └── kotlin/acceptance/driver/             # Loyalty domain driver
+├── users/
+│   └── src/test/
+│       └── (same structure for users domain)
+└── acceptance-shared/                            # Shared library module
+    └── src/main/kotlin/                          # Note: main, not test (it's a library)
+        ├── utils/
+        │   ├── DslContext.kt                     # Isolation utilities
+        │   └── Params.kt
+        ├── stubs/
+        │   └── ExternalServiceStub.kt            # If multiple modules use same external service
+        └── config/
+            └── TestInfrastructure.kt             # DI wiring patterns, common config
+```
+
+### What Belongs Where
+
+**Module-specific (orders/, loyalty/, users/):**
+- Feature files expressing that domain's behavior in its own ubiquitous language
+- DSL classes speaking that domain's vocabulary (e.g., "loyalty points" vs "order fulfillment")
+- Drivers connecting to that domain's entry points (orders API vs loyalty API vs users API)
+
+**Shared (acceptance-shared/):**
+- Universal isolation utilities: `DslContext`, `Params`
+- Test infrastructure patterns: DI configuration helpers, common test wiring
+- External service stubs used by multiple modules (e.g., if both orders and loyalty integrate with the same payment gateway)
+
+**DO NOT share:**
+- Domain-specific DSL classes across modules — each speaks its own language
+- Domain-specific drivers across modules — each connects to different entry points
+- Feature files across modules — each verifies its own boundaries
+
+### Cross-Module Scenarios
+
+If a scenario truly spans multiple domains (e.g., "placing an order awards loyalty points"), you have two options:
+
+1. **Create an integration module:** `acceptance-integration/` with its own three layers that compose calls to multiple module APIs
+2. **Own it in one module:** Put the scenario in the primary module (e.g., orders) and have its driver call the other module's API as if it were any dependency
+
+### Key Principles
+
+- Each module's acceptance tests verify its own boundaries, not cross-module integration
+- Modules can run their acceptance tests in parallel without interference
+- Each module's tests remain isolated using the same aliasing techniques
+- The three-layer separation is maintained within each module
+- Shared code is limited to utilities and infrastructure — never share domain logic
+
+### Build Configuration
+
+Each module's test dependencies would include the shared module:
+
+```kotlin
+// Example for Gradle (build.gradle.kts in orders module)
+dependencies {
+    testImplementation(project(":modules:acceptance-shared"))
+    testImplementation("io.cucumber:cucumber-java:7.x.x")
+    testImplementation("io.insert-koin:koin-test:3.x.x")  // or Spring, etc.
+}
+```
+
+The approach works with any build tool (Gradle, Maven) and any DI framework (Koin, Spring, Guice).
 
 ## Adding a New Acceptance Test
 
