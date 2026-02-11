@@ -258,33 +258,40 @@ This capability is not yet implemented. The above describes the intended design 
 
 In a monorepo with multiple domain modules (orders, loyalty, users, etc.), each module gets its own three layers for domain-specific behavior. Shared utilities live in a separate module that all acceptance tests depend on.
 
-### Structure
+### Structure (Conceptual)
+
+The structure below is **language and build-tool agnostic pseudocode**. Adapt the directory paths, file extensions, and module organization to match your project's conventions (Gradle/Maven, JVM/Node, etc.).
 
 ```
 modules/
-├── orders/
-│   └── src/test/
-│       ├── resources/acceptance/specifications/  # Orders domain Gherkin
-│       ├── kotlin/acceptance/dsl/                # Orders domain DSL
-│       └── kotlin/acceptance/driver/             # Orders domain driver
-├── loyalty/
-│   └── src/test/
-│       ├── resources/acceptance/specifications/  # Loyalty domain Gherkin
-│       ├── kotlin/acceptance/dsl/                # Loyalty domain DSL
-│       └── kotlin/acceptance/driver/             # Loyalty domain driver
-├── users/
-│   └── src/test/
+├── <orders-module>/
+│   └── <test-source-root>/
+│       ├── <specifications-dir>/                 # Orders domain Gherkin (.feature files)
+│       ├── <dsl-dir>/                            # Orders domain DSL
+│       └── <driver-dir>/                         # Orders domain driver
+├── <loyalty-module>/
+│   └── <test-source-root>/
+│       ├── <specifications-dir>/                 # Loyalty domain Gherkin
+│       ├── <dsl-dir>/                            # Loyalty domain DSL
+│       └── <driver-dir>/                         # Loyalty domain driver
+├── <users-module>/
+│   └── <test-source-root>/
 │       └── (same structure for users domain)
-└── acceptance-shared/                            # Shared library module
-    └── src/main/kotlin/                          # Note: main, not test (it's a library)
-        ├── utils/
-        │   ├── DslContext.kt                     # Isolation utilities
-        │   └── Params.kt
-        ├── stubs/
-        │   └── ExternalServiceStub.kt            # If multiple modules use same external service
-        └── config/
-            └── TestInfrastructure.kt             # DI wiring patterns, common config
+└── <acceptance-shared-module>/                   # Shared library module
+    └── <source-root>/                            # Library code (not test code)
+        ├── <utils-dir>/
+        │   ├── DslContext                        # Isolation utilities
+        │   └── Params
+        ├── <stubs-dir>/
+        │   └── ExternalServiceStub               # If multiple modules use same external service
+        └── <config-dir>/
+            └── TestInfrastructure                # DI wiring patterns, common config
 ```
+
+**Examples of how this maps to real projects:**
+- JVM/Gradle: `modules/orders/src/test/kotlin/acceptance/dsl/`, `modules/acceptance-shared/src/main/kotlin/utils/`
+- JVM/Maven: `modules/orders/src/test/java/acceptance/dsl/`, `modules/acceptance-shared/src/main/java/utils/`
+- Node/TypeScript: `modules/orders/test/acceptance/dsl/`, `modules/acceptance-shared/src/utils/`
 
 ### What Belongs Where
 
@@ -318,20 +325,20 @@ If a scenario truly spans multiple domains (e.g., "placing an order awards loyal
 - The three-layer separation is maintained within each module
 - Shared code is limited to utilities and infrastructure — never share domain logic
 
-### Build Configuration
+### Build Configuration (Example)
 
-Each module's test dependencies would include the shared module:
+Each module's test dependencies would include the shared module. Example using Gradle:
 
 ```kotlin
-// Example for Gradle (build.gradle.kts in orders module)
+// build.gradle.kts in orders module (adapt to your build tool)
 dependencies {
     testImplementation(project(":modules:acceptance-shared"))
     testImplementation("io.cucumber:cucumber-java:7.x.x")
-    testImplementation("io.insert-koin:koin-test:3.x.x")  // or Spring, etc.
+    testImplementation("io.insert-koin:koin-test:3.x.x")  // or Spring, Guice, etc.
 }
 ```
 
-The approach works with any build tool (Gradle, Maven) and any DI framework (Koin, Spring, Guice).
+Adapt the syntax to your build tool (Maven `<dependency>`, npm `dependencies`, etc.) and DI framework.
 
 ## Adding a New Acceptance Test
 
