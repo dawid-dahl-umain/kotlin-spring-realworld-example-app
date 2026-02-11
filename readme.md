@@ -256,3 +256,5 @@ This capability is not yet implemented. The above describes the intended design 
 6. If adding a new driver class, register it with `@Import` on `SpringIntegrationConfig`
 
 Run `just test-acceptance` to verify.
+
+Before shipping, run through the **[Acceptance Test Quality Checklist](acceptance-test-checklist.md)** — it covers every rule from this README in a pass/fail format.
