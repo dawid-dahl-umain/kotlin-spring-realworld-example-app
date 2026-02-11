@@ -182,6 +182,70 @@ Acceptance tests are fully isolated and cannot cause side effects:
 
 Running `just test-acceptance` is always safe.
 
+### External Dependencies We Do Not Control
+
+This section describes how to handle third-party APIs and other external services that we do not own — payment providers, notification services, partner APIs, etc. This does **not** apply to infrastructure we control (our own database, our own message queue, etc.).
+
+#### Default: Always Mocked
+
+When acceptance tests run normally (`just test-acceptance`), all external dependencies are mocked. The driver layer injects stubs or fakes instead of real service clients. This is the only way to guarantee:
+
+- **Determinism** — tests produce the same result every time, regardless of network conditions or third-party uptime
+- **Speed** — no network round-trips to external services
+- **Safety** — no mutations in systems we don't control
+- **Isolation** — we only test what we are directly responsible for
+
+This is the default and requires no flags or configuration.
+
+#### Live Mode: Opt-In Real Service Testing
+
+Occasionally — typically before a release — it is useful to verify that real external services still behave as our stubs assume. Contracts drift, APIs get versioned, fields get renamed. A passing mocked test does not guarantee the real integration still works.
+
+Rather than maintaining a separate contract test suite, we reuse existing acceptance scenarios. A flag (environment variable, system property, or similar) switches the driver layer to inject the real service client instead of the stub. Only scenarios explicitly tagged as live-safe are executed in this mode.
+
+**Rules:**
+
+1. **No flag = mocked.** The default run always uses stubs. Live mode is never implicit.
+2. **Only tagged scenarios run in live mode.** Untagged scenarios are skipped entirely when the live flag is active. In the default mocked mode, all scenarios run regardless of tags.
+3. **Tags are per-scenario, not per-feature.** Each scenario is individually assessed and marked. This is a deliberate decision by the developer, not a blanket toggle.
+4. **Prefer read-only scenarios.** GET requests and other read-only operations are generally safe against real services. POST/PUT/DELETE operations that mutate state in external systems should almost never be tagged live-safe.
+5. **Live failures are informational.** A failure in live mode means the external contract may have changed — it does not necessarily mean our code is broken. Developers investigate and decide how to respond: update the integration, pin an API version, add a workaround, or accept the change. There is no single correct response.
+
+**Pseudocode:**
+
+```
+# In the feature file, tag specific scenarios:
+
+@live-safe
+Scenario: Fetch available payment methods
+  When a client requests the list of payment methods
+  Then the response contains at least one payment method
+
+Scenario: Process a payment
+  When a client submits a payment of $50
+  Then the payment is accepted
+  # ^^^ NOT tagged — this mutates external state
+
+
+# In the test wiring (pseudocode):
+
+if live_flag is set:
+    inject RealPaymentClient instead of StubPaymentClient
+    run only scenarios tagged @live-safe
+else:
+    inject StubPaymentClient
+    run all scenarios
+```
+
+**Why this approach:**
+
+- No separate test suite to write and maintain — existing acceptance scenarios already describe the correct behaviour
+- The `ProtocolDriver` interface is the natural injection seam; swapping stub for real is just DI configuration
+- The `@live-safe` tag keeps the scope explicit and prevents accidental mutations in external systems
+- Teams get real contract verification with minimal overhead
+
+This capability is not yet implemented. The above describes the intended design for when external dependencies are introduced.
+
 ## Adding a New Acceptance Test
 
 1. Create or extend a `.feature` file in `src/test/resources/acceptance/specifications/`
