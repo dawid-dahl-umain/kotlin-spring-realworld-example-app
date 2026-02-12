@@ -105,7 +105,7 @@ Acceptance testing requires three distinct levels of isolation. All three must b
 ### State Rules
 
 - [ ] **The SUT is the single source of truth for state** — no test layer maintains its own copy of "what the system should look like"
-- [ ] The driver holds only **transient data**: the last response (overwritten on every call) and session credentials. Nothing else accumulates
+- [ ] The driver is **stateless or nearly stateless** — it does not accumulate business state across steps. If the driver holds any transient data (e.g., session credentials for auth, or the last HTTP response for assertion chaining), that data is minimal, protocol-specific, and overwritten on subsequent calls. Avoid holding transient data unless the protocol absolutely requires it
 - [ ] No layer stores a list of "things created so far" or builds up state across steps — each step either acts or verifies, using the SUT as the authority
 - [ ] DSL classes hold no state beyond what is needed to bridge multi-step Gherkin sequences within a single scenario (e.g., a pending title set in one step and used in the next). This state is local to the scenario instance and does not survive across scenarios
 
